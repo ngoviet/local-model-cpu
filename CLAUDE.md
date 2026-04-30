@@ -282,6 +282,90 @@ Hi there<turn|>
 | Gemma 4 31B | Dense | ~20 GB | Có | 256K | Chất lượng cao nhất, chậm hơn ~5x |
 | Phi-4 Multimodal 14B | Dense | ~9 GB | Có | 128K | Nhẹ, nhanh, chất lượng khá |
 
+## Nghiên cứu: DeepSeek V4 Flash vs Gemma 4 — Coding & Agent
+
+### Vì sao DeepSeek V4 Flash thông minh hơn Gemma 4?
+
+3 yếu tố cốt lõi:
+
+1. **Active params gấp 3.25x**: Flash 13B vs Gemma 4B active/token — giữ được context dài, instruction phức tạp, suy luận đa bước
+2. **Tổng kiến thức gấp 11x**: 284B vs 26B params — nhiều expert chuyên sâu hơn
+3. **Thiết kế cho Agent**: Engram memory xuyên session, CSA+HCA attention tối ưu 1M context, huấn luyện tool calling
+
+### DeepSeek V4 Flash vs Pro (số liệu chính thức)
+
+| Thông số | V4 Flash | V4 Pro |
+|----------|----------|--------|
+| Tổng params | 284B MoE | 1,600B MoE |
+| Active/token | 13B | 49B |
+| Context | 1M | 1M |
+| Giá input (API) | $0.14/M | $0.53/M |
+
+#### Coding (Think-Max mode)
+
+| Benchmark | V4 Flash | V4 Pro | Gap |
+|-----------|----------|--------|-----|
+| SWE-bench Verified | 79.0% | 80.6% | +1.6 |
+| SWE-bench Pro | 52.6% | 55.4% | +2.8 |
+| LiveCodeBench | 91.6 | 93.5 | +1.9 |
+| Codeforces | 3052 | 3206 | +154 |
+
+→ Code: Pro hơn Flash ~2-3 điểm — gap nhỏ.
+
+#### Agent (Think-Max mode)
+
+| Benchmark | V4 Flash | V4 Pro | Gap |
+|-----------|----------|--------|-----|
+| Terminal Bench 2.0 | 56.9% | 67.9% | **+11.0** |
+| BrowseComp | 73.2% | 83.4% | **+10.2** |
+| MCPAtlas | 69.0% | 73.6% | +4.6 |
+| Toolathlon | 47.8% | 51.8% | +4.0 |
+
+→ Agent: Pro vượt trội, gap 4-11 điểm.
+
+#### Điểm thú vị: Non-Think mode Flash ≈ Pro
+
+| Benchmark | Flash Non-Think | Pro Non-Think |
+|-----------|----------------|---------------|
+| SWE Verified | **73.7** | 73.6 |
+| MMLU-Pro | **83.0** | 82.9 |
+
+→ Flash 13B active tối ưu đến mức ngang Pro 49B ở chế độ không suy luận.
+
+### So sánh với mô hình khác (SWE-bench Verified)
+
+| Model | Score | Ghi chú |
+|-------|-------|---------|
+| DeepSeek V4 Pro-Max | 80.6% | Cần 16× H100 |
+| DeepSeek V4 Flash-Max | 79.0% | 284B, không chạy được trên 64GB |
+| Qwen3.6 35B A3B | 73.4% | 35B/3B active, chạy được 64GB, agent MCPMark 37% |
+| Gemma 4 31B | 52.0% | Dense, chậm 5x |
+| Gemma 4 26B A4B | ~48% | Đang chạy trên máy, agent MCPMark 18% |
+
+### Có chạy local được DeepSeek V4 Flash không?
+
+- **Không** — 284B params, Q2 quantization cũng cần ~70GB
+- llama.cpp: WIP, chưa merge (`nisparks/wip/deepseek-v4-support`)
+- Tất cả benchmark đều chạy GPU (RTX Pro 6000 96GB+)
+- Nếu chạy được CPU: 13B active → ~3-4 t/s với DDR5 4800
+
+### Chi phí API vs Local
+
+| | API DeepSeek V4 | Local ($9K RTX Pro 6000) |
+|---|---|---|
+| Chi phí/năm | ~$1,332 ($111/tháng) | $9K upfront |
+| Break-even | — | ~6-7 năm |
+| Lợi ích local | — | Privacy, không rate limit, không phụ thuộc internet |
+
+→ Ở mức dùng hiện tại, API vẫn rẻ hơn. Chỉ đầu tư GPU khi dùng 24/7 hoặc cần privacy tuyệt đối.
+
+### Kết luận
+
+- **Gemma 4 Q8 local** cho task đơn giản, chat, vision
+- **DeepSeek V4 Flash API** ($0.14/M) cho code phức tạp và agent
+- **DeepSeek V4 Pro API** cho agent multi-step dài, browse, task khó nhất
+- **Qwen3.6 35B A3B** nếu muốn local agent tốt hơn (nhưng bị chèn tiếng Trung)
+
 ## Quick start checklist
 
 - [x] Tải llama.cpp pre-built binary: `llama-b8984-bin-win-cpu-x64.zip`
@@ -337,3 +421,16 @@ Hi there<turn|>
 - [ ] Đo RAM thực tế khi chat dài / nhiều ảnh
 - [ ] Thử Qwen3-VL-30B-A3B làm model dự phòng
 - [ ] Tinh chỉnh `--visual-token-budget` (280/560/1120) nếu cần OCR
+
+### 2026-04-30 (part 2) — Nghiên cứu DeepSeek V4 & so sánh
+
+1. **So sánh DeepSeek V4 Flash vs Pro**: Flash 284B/13B active, Pro 1.6T/49B active
+2. **Coding gap Flash→Pro**: Chỉ 2-3 điểm (SWE-bench 79% vs 80.6%) — gap nhỏ
+3. **Agent gap Flash→Pro**: 4-11 điểm — Pro vượt trội cho agent
+4. **Phát hiện**: Flash Non-Think ngang Pro Non-Think (SWE 73.7 vs 73.6)
+5. **Không chạy được local**: DeepSeek V4 Flash 284B — cần ít nhất 70GB VRAM, llama.cpp chưa hỗ trợ chính thức
+6. **Gemma 4 vs DeepSeek V4**: 3 lý do chính — active params (4B vs 13B), tổng kiến thức (26B vs 284B), thiết kế agent
+7. **Qwen3.6 35B A3B**: SWE-bench 73.4%, chạy được 64GB, agent MCPMark 37% — nhưng bị chèn tiếng Trung
+8. **API cost analysis**: $14.81/4 ngày → ~$111/tháng → ~$1,332/năm. Local $9K GPU = break-even ~6-7 năm
+9. **Chiến lược**: Gemma 4 Q8 local cho task đơn giản + DeepSeek V4 Flash API ($0.14/M) cho code/agent phức tạp
+10. **Cập nhật CLAUDE.md**: Thêm toàn bộ bảng benchmark, so sánh, phân tích chi phí
