@@ -1,0 +1,14 @@
+# llama.cpp binaries (downloaded separately)
+llama.cpp/*.dll
+llama.cpp/*.exe
+llama.cpp/*.zip
+
+# Models (too large, downloaded separately)
+*.gguf
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temp
+*.tmp
