@@ -292,3 +292,48 @@ Hi there<turn|>
 - [ ] Mở http://127.0.0.1:8080 — chat text
 - [ ] Upload ảnh — test vision
 - [ ] Kiểm tra RAM usage trong Task Manager (~19.6 GB khi chạy)
+
+## Session Log
+
+### 2026-04-30 — Khởi tạo & tối ưu
+
+1. **Nghiên cứu model**: Chọn Gemma 4 26B A4B (MoE, 128 experts, 8 active) làm primary, Qwen3-VL-30B-A3B làm dự phòng
+2. **Tải llama.cpp**: Pre-built binary b8984 (không có cmake/compiler trên máy)
+3. **Tải model**: Unsloth Dynamic GGUF + mmproj-F16.gguf (user tự tải, path `D:\AI\Models\gemma-4-26B-A4B-it\`)
+4. **Test load ban đầu**: Thành công với Q4_K_M, speed 13.4 t/s (8 threads). PC treo khi dùng 10 threads → giảm còn 8
+5. **Benchmark thread**: Test 8/10/12/14 threads — **8 threads tối ưu** cho i5-14400T (E-cores gây chậm)
+6. **Benchmark quantization**: Q4_K_M (13.35 t/s), Q6_K (12.34 t/s), Q8_0 (11.51 t/s). Chọn **Q8_0** — chất lượng cao nhất, chỉ chậm hơn Q4 ~14%
+7. **Vision**: mmproj-F16.gguf load thành công (`loaded multimodal model`, gemma4v encoder)
+8. **Tăng context**: Từ 32K lên **256K (262144)** — KV cache tăng từ 0.8GB lên 3.2GB, tổng RAM ~30.6GB
+9. **Thêm `-b 4096`**: Tăng batch size cho prompt processing — xử lý input dài nhanh hơn
+10. **LAN access**: `--host 0.0.0.0` — IP LAN `192.168.10.224:8080`
+11. **Tắt thinking**: `--reasoning off` (user preference)
+12. **Script**: `run-server.bat` — double-click chạy server với toàn bộ cấu hình tối ưu
+13. **GitHub**: Push lên `ngoviet/local-model-cpu` (public)
+
+### Thông số máy
+
+| Thành phần | Giá trị |
+|------------|---------|
+| CPU | Intel Core i5-14400T (6P + 4E, 16 threads) |
+| RAM | 64GB DDR5 4800 dual-channel |
+| Storage | SSD |
+| OS | Windows 11 Pro |
+| IP LAN | 192.168.10.224 |
+
+### File quan trọng
+
+| File | Mục đích |
+|------|----------|
+| `run-server.bat` | Script chạy server, double-click |
+| `llama.cpp/` | llama.cpp b8984 pre-built binaries |
+| `D:\AI\Models\gemma-4-26B-A4B-it\` | Model GGUF + mmproj |
+| `.gitignore` | Exclude binaries, models khỏi git |
+
+### Việc cần làm tiếp
+
+- [ ] Test vision: upload ảnh qua web UI `http://127.0.0.1:8080`
+- [ ] Test LAN: truy cập từ máy khác trong mạng
+- [ ] Đo RAM thực tế khi chat dài / nhiều ảnh
+- [ ] Thử Qwen3-VL-30B-A3B làm model dự phòng
+- [ ] Tinh chỉnh `--visual-token-budget` (280/560/1120) nếu cần OCR
