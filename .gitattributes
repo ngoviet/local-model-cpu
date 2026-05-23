@@ -1,0 +1,3 @@
+# Override GitHub linguist: Shell scripts are helpers, docs are primary
+*.md linguist-detectable=true
+*.bat linguist-vendored=false
