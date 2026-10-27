@@ -1,9 +1,15 @@
 # Local LLM on CPU (llama.cpp)
 
+<!-- readme-axi type=tool -->
+
+**English** · [Tiếng Việt](README.vi.md)
+
 Notes and a ready-to-run script for **CPU-only inference** of a vision-capable MoE model with
 [llama.cpp](https://github.com/ggml-org/llama.cpp) on a small Windows mini PC — no GPU.
-
 **Result:** Gemma 4 26B A4B (Q8_0) + vision, 256K context, **~11.5 tokens/s** generation on an i5-14400T with 64 GB DDR5.
+
+> 🇻🇳 Built and maintained by one person in Việt Nam — if it saves you time, please
+> [support the project](#support-the-project).
 
 ## Hardware
 
@@ -42,14 +48,17 @@ Q8_0 was chosen: best quality, only ~14 % slower than Q4_K_M.
 
 8 threads is optimal — E-cores add memory-bandwidth contention rather than speed.
 
-## Run
+## Installation
 
 1. Download a pre-built llama.cpp CPU release (`llama-*-bin-win-cpu-x64.zip`) into `llama.cpp/`.
 2. Download the model and vision projector from
    [unsloth/gemma-4-26B-A4B-it-GGUF](https://huggingface.co/unsloth/gemma-4-26B-A4B-it-GGUF):
    `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf` and `mmproj-F16.gguf`.
-3. Set `MODEL_DIR` in [`run-server.bat`](run-server.bat), then double-click it.
-4. Open <http://127.0.0.1:8080> (web UI with image upload). The server also listens on the LAN.
+
+## Usage
+
+1. Set `MODEL_DIR` in [`run-server.bat`](run-server.bat), then double-click it.
+2. Open <http://127.0.0.1:8080> (web UI with image upload). The server also listens on the LAN.
 
 Key flags used:
 
@@ -84,9 +93,10 @@ Full working notes (in Vietnamese) — alternative models, RAM budget, prompt fo
   <img src="https://raw.githubusercontent.com/ngoviet/.github/main/assets/support/vietqr-card.svg" width="300" alt="VietQR — MB Bank — NGO DUC VIET — 911051212">
 </p>
 
-<p align="center"><sub>🇻🇳 VietQR: quét bằng app ngân hàng bất kỳ, nội dung <code>Ung ho local-model-cpu</code>. Cảm ơn bạn! · Thank you for keeping this project alive.</sub></p>
+<p align="center"><sub>🇻🇳 VietQR: scan with any Vietnamese banking app, transfer note <code>Ung ho local-model-cpu</code>. Thank you for keeping this project alive!</sub></p>
+<p align="center"><sub>Crypto (BEP20 network): <code>0x57f07d44fb581cddc028a0c67d63a8cc05aa6caa</code> · USDT · USDC · BNB · ETH · BTC</sub></p>
 <!-- support:end -->
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) © Ngô Đức Việt.
